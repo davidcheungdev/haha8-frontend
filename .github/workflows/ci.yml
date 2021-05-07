@@ -8,7 +8,7 @@ jobs:
     env:
       CI: true
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      STATIC_SITE_BUCKET_PREFIX: ${{ secrets.STATIC_SITE_BUCKET_PREFIX }}/haha8
+      STATIC_SITE_BUCKET_PREFIX: s3://${{ secrets.STATIC_SITE_BUCKET_PREFIX }}/haha8
       region:  ${{ secrets.AWS_DEFAULT_REGION }}
     steps:
     - uses: actions/checkout@v2
@@ -28,14 +28,6 @@ jobs:
       runs-on: ubuntu-latest
       env:
         CI: true
-      strategy:
-        matrix:
-          include:
-          - env: demo
-            bucket: ${{ env.STATIC_SITE_BUCKET_PREFIX }}
-      outputs:
-        needs-approval: "${{ steps.needs-approval.outputs.needs-approval }}"
-        approved-deploy: "${{ steps.approved-deploy.outputs.approved-deploy }}"
       steps:
         - uses: actions/checkout@v2
         - name: Build Static Site
@@ -44,12 +36,10 @@ jobs:
             node-version: 14.x
         - run: |
             npm run export
-          env:
-            REACT_APP_CONFIG: ${{ matrix.env }}
         - name: Upload build artifact to Github
           uses: actions/upload-artifact@v1
           with:
-            name: build-artifact-${{ matrix.env }}
+            name: build-artifact
             path: out/
         ## This sets `step.outputs` is picked up by `jobs.outputs`, then when the step deploy reads `jobs.outputs`
         ## this provides data and set matrix for the deploy steps. This allows us to specify the data once
@@ -63,22 +53,10 @@ jobs:
         #   }]
         # }
         ##
-        - name: needs-approval
-          id: needs-approval
-          if: ${{ matrix.env == 'production' }}
-          run: echo "::set-output name=needs-approval::{\"include\":[{\"env\":\"${{ matrix.env }}\",\"buildName\":\"build-artifact-${{ matrix.env }}\",\"bucket\":\"${{ matrix.bucket }}\"}]}"
-        - name: approved-deploy
-          id: approved-deploy
-          if: ${{ matrix.env == 'demo' }}
-          run: echo "::set-output name=approved-deploy::{\"include\":[{\"env\":\"${{ matrix.env }}\",\"buildName\":\"build-artifact-${{ matrix.env }}\",\"bucket\":\"${{ matrix.bucket }}\"}]}"
   deploy:
       name: Deploy
       runs-on: ubuntu-latest
       needs: build
-      strategy:
-        # with `needs` declared, the job will have access to the output of the needed step
-        # and in the needed step(`build`) we have the output of what should be instantly deployed
-        matrix: ${{ fromJSON(needs.build.outputs.approved-deploy) }}
 
       steps:
       # Once github action supports nested composite actions (anything `uses` is a composite action)
@@ -91,11 +69,11 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: <% index .Params `region` %>
+          aws-region: ${{ env.region }}
       - name: Download build artifact from Github
         uses: actions/download-artifact@v1
         with:
-          name: ${{ matrix.buildName }}
+          name: build-artifact
           path: build/
       - name: Sync with S3
         shell: bash
@@ -105,5 +83,5 @@ jobs:
       - name: Invalidate Cloudfront
         shell: bash
         run: |
-          export DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?@=='${{ matrix.bucket }}']].Id | [0]" | tr -d '"')
+          export DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?@=='${{ secrets.STATIC_SITE_BUCKET_PREFIX }}']].Id | [0]" | tr -d '"')
           aws cloudfront create-invalidation --distribution-id ${DIST_ID} --paths "/*"
