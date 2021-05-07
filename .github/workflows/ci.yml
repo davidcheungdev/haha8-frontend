@@ -2,6 +2,8 @@ name: CI Pipeline
 on:
   push:
     branches: [master, main]
+env:
+  region: ${{ secrets.AWS_DEFAULT_REGION }}
 jobs:
   unit-test:
     runs-on: ubuntu-latest
@@ -9,7 +11,6 @@ jobs:
       CI: true
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       STATIC_SITE_BUCKET_PREFIX: s3://${{ secrets.STATIC_SITE_BUCKET_PREFIX }}/haha8
-      region:  ${{ secrets.AWS_DEFAULT_REGION }}
     steps:
     - uses: actions/checkout@v2
     - name: Run Unit Tests
