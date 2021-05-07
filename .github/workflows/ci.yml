@@ -32,7 +32,7 @@ jobs:
         matrix:
           include:
           - env: demo
-            bucket: ${{ secrets.STATIC_SITE_BUCKET_PREFIX }}
+            bucket: ${{ env.STATIC_SITE_BUCKET_PREFIX }}
       outputs:
         needs-approval: "${{ steps.needs-approval.outputs.needs-approval }}"
         approved-deploy: "${{ steps.approved-deploy.outputs.approved-deploy }}"
