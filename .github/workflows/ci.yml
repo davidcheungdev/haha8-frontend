@@ -17,8 +17,7 @@ jobs:
       with:
         node-version: 14.x
     - run: |
-        yarn
-        yarn test --watchAll=false
+        echo "Run your tests here"
     - if: env.AWS_ACCESS_KEY_ID == null
       run: |
         echo "AWS Credentials not found, This is expected for the first run as the repo is provisioned then secrets are injected at a later step."
