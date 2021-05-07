@@ -4,13 +4,13 @@ on:
     branches: [master, main]
 env:
   region: ${{ secrets.AWS_DEFAULT_REGION }}
+  STATIC_SITE_BUCKET_PREFIX: s3://${{ secrets.STATIC_SITE_BUCKET_PREFIX }}/haha8
 jobs:
   unit-test:
     runs-on: ubuntu-latest
     env:
       CI: true
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      STATIC_SITE_BUCKET_PREFIX: s3://${{ secrets.STATIC_SITE_BUCKET_PREFIX }}/haha8
     steps:
     - uses: actions/checkout@v2
     - name: Run Unit Tests
