@@ -4,7 +4,7 @@ on:
     branches: [master, main]
 env:
   region: ${{ secrets.AWS_DEFAULT_REGION }}
-  STATIC_SITE_BUCKET_PREFIX: s3://${{ secrets.STATIC_SITE_BUCKET_PREFIX }}/haha8
+  S3_bucket: s3://${{ secrets.STATIC_SITE_BUCKET_PREFIX }}/haha8-frontend/
 jobs:
   unit-test:
     runs-on: ubuntu-latest
@@ -81,7 +81,7 @@ jobs:
         shell: bash
         run: |
           cd build
-          aws s3 sync . ${{ env.STATIC_SITE_BUCKET_PREFIX }}
+          aws s3 sync . ${{ env.S3_bucket }}
       - name: Invalidate Cloudfront
         shell: bash
         run: |
