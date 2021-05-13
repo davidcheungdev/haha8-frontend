@@ -43,18 +43,6 @@ jobs:
           with:
             name: build-artifact
             path: out/
-        ## This sets `step.outputs` is picked up by `jobs.outputs`, then when the step deploy reads `jobs.outputs`
-        ## this provides data and set matrix for the deploy steps. This allows us to specify the data once
-        ## and have the subsequence step can pass along the information created during this step.
-        # the Deploy step will have a strategy matrix as follows:
-        # {
-        #   "include": [{
-        #     "env": "stage",
-        #     "buildName": "build-artifact-stage",
-        #     "bucket": "app.mydomain.com"
-        #   }]
-        # }
-        ##
   deploy:
       name: Deploy
       runs-on: ubuntu-latest
